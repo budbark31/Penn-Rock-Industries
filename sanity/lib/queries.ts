@@ -1,10 +1,11 @@
 import { groq } from "next-sanity";
 
+// We added "images": images[0..4].asset->url
 export const INVENTORY_QUERY = groq`*[_type == "inventory" && status != "sold"] | order(_createdAt desc) {
   _id,
   title,
   "slug": slug.current,
-  "mainImage": images[0].asset->url,
+  "images": images[0..4].asset->url,
   price,
   year,
   make,

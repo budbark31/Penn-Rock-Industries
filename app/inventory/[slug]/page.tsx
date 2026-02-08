@@ -1,13 +1,13 @@
 import { client } from "@/sanity/lib/client";
 import { groq } from "next-sanity";
-import Image from "next/image";
 import Link from "next/link";
 import { PortableText } from "next-sanity"; 
+import ImageGallery from "@/app/components/ImageGallery"; 
+import ContactButtons from "@/app/components/ContactButtons"; // Import the new buttons
 
-// 1. The Query
 const TRUCK_QUERY = groq`*[_type == "inventory" && slug.current == $slug][0]{
   title,
-  "mainImage": images[0].asset->url,
+  "images": images[].asset->url, 
   price,
   year,
   make,
@@ -22,11 +22,8 @@ const TRUCK_QUERY = groq`*[_type == "inventory" && slug.current == $slug][0]{
 
 export const revalidate = 60;
 
-// 2. Standard Next.js 15/16 Page Props
 export default async function TruckPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-
-  // 3. Fetch Data
   const truck = await client.fetch(TRUCK_QUERY, { slug });
 
   if (!truck) {
@@ -38,40 +35,33 @@ export default async function TruckPage({ params }: { params: Promise<{ slug: st
     );
   }
 
-  // 4. Render UI
   return (
     <main className="max-w-7xl mx-auto px-4 py-12 bg-white min-h-screen">
       <Link href="/" className="text-blue-900 font-bold hover:underline mb-6 inline-block">
         &larr; Back to Inventory
       </Link>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Left: Image */}
-        <div className="bg-gray-100 rounded-lg overflow-hidden h-[400px] relative border border-gray-200 shadow-sm">
-          {truck.mainImage ? (
-            <Image
-              src={truck.mainImage}
-              alt={truck.title}
-              fill
-              className="object-cover"
-              sizes="(max-width: 1024px) 100vw, 50vw"
-            />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+        {/* LEFT COLUMN: Gallery */}
+        <div>
+          {truck.images && truck.images.length > 0 ? (
+            <ImageGallery images={truck.images} title={truck.title} />
           ) : (
-            <div className="flex items-center justify-center h-full text-gray-400">
-              No Image
+            <div className="bg-gray-100 h-64 flex items-center justify-center rounded-lg text-gray-400">
+              No Images Available
             </div>
           )}
         </div>
 
-        {/* Right: Details */}
-        <div>
+        {/* RIGHT COLUMN: Details */}
+        <div className="flex flex-col h-full">
           {truck.category && (
-            <span className="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide mb-4">
+            <span className="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide mb-4 w-fit">
               {truck.category}
             </span>
           )}
 
-          <h1 className="text-4xl font-extrabold text-gray-900 mb-2">{truck.title}</h1>
+          <h1 className="text-4xl font-extrabold text-gray-900 mb-2 leading-tight">{truck.title}</h1>
           <p className="text-gray-600 text-xl mb-6">
             {truck.year} {truck.make} {truck.model} • {truck.hoursOrMileage}
           </p>
@@ -85,15 +75,14 @@ export default async function TruckPage({ params }: { params: Promise<{ slug: st
             </p>
           </div>
 
-          <div className="prose max-w-none text-gray-800">
+          <div className="prose max-w-none text-gray-800 mb-8">
             <h3 className="text-xl font-bold mb-2 text-gray-900">Description</h3>
             {truck.description && <PortableText value={truck.description} />}
           </div>
 
-          <div className="mt-8">
-            <button className="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-4 rounded-lg text-lg transition-colors shadow-md">
-              Contact Sales About This Truck
-            </button>
+          <div className="mt-auto">
+            {/* Replaced static button with our new Smart Buttons */}
+            <ContactButtons truckTitle={truck.title} />
           </div>
         </div>
       </div>
