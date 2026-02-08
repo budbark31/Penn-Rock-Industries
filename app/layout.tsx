@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Navbar from "@/app/components/Navbar";
-import Footer from "@/app/components/Footer"; // Import the new Footer
+import Footer from "@/app/components/Footer";
+import AdminNavbar from "@/app/components/AdminNavbar"; // Import the new bar
+import StudioLayoutWrapper from "@/app/components/StudioLayoutWrapper"; // Import the wrapper
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -15,15 +17,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased bg-white flex flex-col min-h-screen">
-        <Navbar />
-        
-        <div className="flex-grow">
-          {children}
-        </div>
-
-        {/* Replaced the hard-coded footer with the Component */}
-        <Footer />
+      {/* Removed the classes here, the Wrapper handles the structure now */}
+      <body className="antialiased bg-white">
+        <StudioLayoutWrapper
+           publicNavbar={<Navbar />}
+           publicFooter={<Footer />}
+           adminNavbar={<AdminNavbar />}
+        >
+           {children}
+        </StudioLayoutWrapper>
       </body>
     </html>
   );

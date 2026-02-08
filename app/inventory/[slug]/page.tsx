@@ -4,23 +4,39 @@ import Link from "next/link";
 import { PortableText } from "next-sanity"; 
 import ImageGallery from "@/app/components/ImageGallery"; 
 import ContactButtons from "@/app/components/ContactButtons";
-import { Metadata } from "next"; // Required for the SEO magic
+import InventoryCard from "@/app/components/InventoryCard"; // Reuse the card!
+import { Metadata } from "next";
 
-// 1. THE QUERY
-// We fetch 'images' (array) for the gallery, and all the details for the text
-const TRUCK_QUERY = groq`*[_type == "inventory" && slug.current == $slug][0]{
-  title,
-  "images": images[].asset->url, 
-  price,
-  year,
-  make,
-  model,
-  hoursOrMileage,
-  status,
-  description,
-  category,
-  stockDate,
-  paperwork
+// 1. UPDATED QUERY: Fetch the truck + 3 similar ones in the same category
+const TRUCK_QUERY = groq`{
+  "truck": *[_type == "inventory" && slug.current == $slug][0]{
+    _id,
+    title,
+    "images": images[].asset->url, 
+    price,
+    year,
+    make,
+    model,
+    hoursOrMileage,
+    status,
+    description,
+    category,
+    stockDate,
+    paperwork
+  },
+  "similar": *[_type == "inventory" && slug.current != $slug && category == ^.category && status != "sold"][0..2]{
+    _id,
+    title,
+    "slug": slug.current,
+    "images": images[0..4].asset->url,
+    price,
+    year,
+    make,
+    model,
+    hoursOrMileage,
+    status,
+    category
+  }
 }`;
 
 export const revalidate = 60;
@@ -29,47 +45,29 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
-// 2. SEO GENERATOR (This creates the "Text Message Preview")
+// SEO Generator (Same as before)
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  const data = await client.fetch(groq`*[_type == "inventory" && slug.current == $slug][0]{ title, "image": images[0].asset->url, year, make, model }`, { slug });
   
-  // Fetch just the data needed for the preview
-  const truck = await client.fetch(TRUCK_QUERY, { slug });
-
-  if (!truck) {
-    return {
-      title: "Truck Not Found | Penn Rock Industries",
-    };
-  }
-
-  // Choose the first image as the preview, or a fallback if none exist
-  const previewImage = truck.images && truck.images.length > 0 
-    ? truck.images[0] 
-    : "/icon.jpg"; // Fallback to logo if no truck photo
+  if (!data) return { title: "Truck Not Found" };
 
   return {
-    title: `${truck.title} | Penn Rock`,
-    description: `For Sale: ${truck.year} ${truck.make} ${truck.model} - ${truck.hoursOrMileage}. Click for price and photos.`,
+    title: `${data.title} | Penn Rock`,
     openGraph: {
-      title: truck.title,
-      description: `${truck.year} ${truck.make} ${truck.model} | Available Now`,
-      images: [previewImage], // This puts the photo in the text message!
+      title: data.title,
+      images: data.image ? [data.image] : [],
     },
   };
 }
 
-// 3. THE PAGE CONTENT
 export default async function TruckPage({ params }: Props) {
   const { slug } = await params;
-  const truck = await client.fetch(TRUCK_QUERY, { slug });
+  const data = await client.fetch(TRUCK_QUERY, { slug });
+  const { truck, similar } = data || {};
 
   if (!truck) {
-    return (
-      <div className="text-center py-20 bg-white">
-        <h1 className="text-2xl font-bold text-gray-900">Truck Not Found</h1>
-        <Link href="/" className="text-blue-900 underline mt-4 block">Back to Inventory</Link>
-      </div>
-    );
+    return <div className="text-center py-20">Truck Not Found</div>;
   }
 
   return (
@@ -78,8 +76,9 @@ export default async function TruckPage({ params }: Props) {
         &larr; Back to Inventory
       </Link>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-        {/* LEFT COLUMN: Gallery */}
+      {/* MAIN TRUCK SECTION */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start mb-20">
+        {/* Gallery */}
         <div>
           {truck.images && truck.images.length > 0 ? (
             <ImageGallery images={truck.images} title={truck.title} />
@@ -90,7 +89,7 @@ export default async function TruckPage({ params }: Props) {
           )}
         </div>
 
-        {/* RIGHT COLUMN: Details */}
+        {/* Details */}
         <div className="flex flex-col h-full">
           {truck.category && (
             <span className="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide mb-4 w-fit">
@@ -118,11 +117,22 @@ export default async function TruckPage({ params }: Props) {
           </div>
 
           <div className="mt-auto">
-            {/* Contact Buttons */}
             <ContactButtons truckTitle={truck.title} />
           </div>
         </div>
       </div>
+
+      {/* SIMILAR TRUCKS SECTION */}
+      {similar && similar.length > 0 && (
+        <div className="border-t border-gray-200 pt-12">
+          <h2 className="text-2xl font-bold text-gray-900 mb-8">Similar Inventory</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {similar.map((simTruck: any) => (
+              <InventoryCard key={simTruck._id} truck={simTruck} />
+            ))}
+          </div>
+        </div>
+      )}
     </main>
   );
 }

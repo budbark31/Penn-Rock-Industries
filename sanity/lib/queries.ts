@@ -1,7 +1,10 @@
 import { groq } from "next-sanity";
 
-// We added "images": images[0..4].asset->url
-export const INVENTORY_QUERY = groq`*[_type == "inventory" && status != "sold"] | order(_createdAt desc) {
+// UPDATED: Order by STATUS first (Available comes before Sold), then by Date
+export const INVENTORY_QUERY = groq`*[
+  _type == "inventory" 
+  && ($category == "all" || category == $category) 
+] | order(status asc, _createdAt desc) {
   _id,
   title,
   "slug": slug.current,
