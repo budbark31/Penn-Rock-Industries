@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { PortableText } from "next-sanity"; 
 
+// 1. The Query (Now includes stockDate and paperwork)
 const TRUCK_QUERY = groq`*[_type == "inventory" && slug.current == $slug][0]{
   title,
   "mainImage": images[0].asset->url,
@@ -19,36 +20,42 @@ const TRUCK_QUERY = groq`*[_type == "inventory" && slug.current == $slug][0]{
   paperwork
 }`;
 
-// Refresh data every 60 seconds
 export const revalidate = 60;
 
-export default async function TruckPage({ params }: { params: Promise<{ slug: string }> }) {
-  // 1. Await the params Promise (Critical for Next.js 15/16)
-  const { slug } = await params;
+export default async function TruckPage({ params }: { params: Promise<any> }) {
+  // 2. Await params and safely extract slug
+  const resolvedParams = await params;
+  const slug = resolvedParams?.slug;
 
-  // 2. Safety Check: If slug is somehow missing, stop here to prevent the Crash
+  // 3. SAFETY CHECK: This is the part that was missing!
   if (!slug) {
     return (
-      <div className="text-center py-20 text-red-500">
-        Error: No Truck ID found in URL.
+      <div className="min-h-screen bg-white p-20 flex flex-col items-center justify-center">
+        <h1 className="text-red-600 text-3xl font-bold mb-4">⚠️ Debugging Route Error</h1>
+        <p className="text-gray-700 mb-4">The URL looks right, but Next.js didn't catch the ID.</p>
+        <p className="text-sm text-gray-500">
+          <strong>Fix:</strong> Stop the server, delete the <code className="bg-gray-200 px-1">.next</code> folder, and restart.
+        </p>
+        <Link href="/" className="mt-8 text-blue-600 underline font-bold">Return Home</Link>
       </div>
     );
   }
 
-  // 3. Fetch Data (Now safe because we know slug exists)
+  // 4. Normal Fetch (Only runs if slug exists)
   const truck = await client.fetch(TRUCK_QUERY, { slug });
 
   if (!truck) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-20 text-center">
+      <div className="min-h-screen bg-white py-20 text-center">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">Truck Not Found</h1>
-        <Link href="/" className="text-blue-900 hover:underline">
+        <Link href="/" className="text-blue-900 font-bold hover:underline">
           &larr; Return to Inventory
         </Link>
       </div>
     );
   }
 
+  // 5. The UI (Forced Light Mode with 'bg-white')
   return (
     <main className="max-w-7xl mx-auto px-4 py-12 bg-white min-h-screen">
       <Link href="/" className="text-blue-900 font-bold hover:underline mb-6 inline-block">
@@ -68,18 +75,18 @@ export default async function TruckPage({ params }: { params: Promise<{ slug: st
             />
           ) : (
             <div className="flex items-center justify-center h-full text-gray-400">
-              No Image Available
+              No Image
             </div>
           )}
         </div>
 
         {/* Right: Details */}
         <div>
-          <div className="mb-4">
-            <span className="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">
-              {truck.category || "Inventory"}
+          {truck.category && (
+            <span className="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide mb-4">
+              {truck.category}
             </span>
-          </div>
+          )}
 
           <h1 className="text-4xl font-extrabold text-gray-900 mb-2">{truck.title}</h1>
           <p className="text-gray-600 text-xl mb-6">
