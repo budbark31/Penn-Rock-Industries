@@ -2,15 +2,16 @@ import { client } from "@/sanity/lib/client";
 import { INVENTORY_QUERY } from "@/sanity/lib/queries";
 import InventoryCard from "@/app/components/InventoryCard";
 
-// Update the cache every 60 seconds
 export const revalidate = 60;
 
 export default async function Home() {
   const trucks = await client.fetch(INVENTORY_QUERY);
 
   return (
-    <main className="min-h-screen bg-gray-50 pb-20">
-      {/* Hero Section */}
+    // Changed min-h-screen bg-gray-50 to bg-white
+    <main className="min-h-screen bg-white pb-20">
+      
+      {/* Hero Section (Keep this dark for contrast) */}
       <div className="bg-slate-900 text-white py-20 px-4 mb-12 text-center">
         <h1 className="text-4xl font-bold tracking-tight uppercase">Penn Rock Inventory</h1>
         <p className="mt-4 text-slate-300">Heavy Trucks & Equipment Sales</p>
