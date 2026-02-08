@@ -3,7 +3,7 @@ import { groq } from "next-sanity";
 import InventoryCard from "@/app/components/InventoryCard";
 import FilterBar from "@/app/components/FilterBar";
 
-// 1. DYNAMIC QUERY: Accepts a $category parameter
+// Query (Same as before)
 const INVENTORY_QUERY = groq`*[
   _type == "inventory" 
   && status != "sold"
@@ -24,26 +24,28 @@ const INVENTORY_QUERY = groq`*[
 
 export const revalidate = 60;
 
-// 2. Accept 'searchParams' from the URL
 export default async function Home({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
   const resolvedParams = await searchParams;
   const category = resolvedParams?.category || "all";
-
-  // 3. Fetch data using the category filter
   const trucks = await client.fetch(INVENTORY_QUERY, { category });
 
   return (
-    <main className="min-h-screen bg-white pb-20">
+    // CHANGE 1: Added "pt-16" (Padding Top) to push everything down
+    <main className="min-h-screen bg-white pb-20 pt-16 md:pt-20">
       
-
+      {/* If you deleted the Hero Section, this container is now first */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-           <h2 className="text-2xl font-bold text-gray-900 mb-4 md:mb-0">Latest Arrivals</h2>
+        
+        {/* Header Area */}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-8">
+           <h2 className="text-3xl font-bold text-gray-900 mb-4 md:mb-0">Latest Arrivals</h2>
+           {/* Optional: You could add a 'View All' link here later */}
         </div>
         
-        {/* 4. Insert Filter Bar */}
+        {/* Filter Bar */}
         <FilterBar />
         
+        {/* Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {trucks.length > 0 ? (
             trucks.map((truck: any) => (

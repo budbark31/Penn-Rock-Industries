@@ -1,37 +1,40 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 export default function Navbar() {
   const pathname = usePathname();
-
-  // Helper to check if a link is active
   const isActive = (path: string) => pathname === path;
 
   return (
-    <nav className="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+    // Increased height from h-20 to h-24 to fit the bigger logo
+    <nav className="bg-slate-900 text-white shadow-lg sticky top-0 z-50 h-24 flex items-center">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        <div className="flex justify-between items-center">
           
-          {/* 1. LOGO / BRAND */}
-          <Link href="/" className="flex items-center gap-2 group">
-             {/* If you have a logo file, uncomment this:
-             <Image src="/icon.jpg" alt="Logo" width={40} height={40} className="rounded" /> 
+          {/* 1. BIG LOGO */}
+          <Link href="/" className="flex items-center gap-3 group">
+             {/* Icon Placeholder (Uncomment if you add the image later)
+             <div className="relative h-12 w-12 rounded-lg overflow-hidden border border-slate-600 hidden md:block">
+                <Image src="/icon.jpg" alt="Logo" fill className="object-cover" />
+             </div>
              */}
+             
              <div className="flex flex-col">
-               <span className="font-bold text-xl uppercase tracking-wider group-hover:text-gray-300 transition-colors">
+               {/* Changed text-xl -> text-3xl (Big & Bold) */}
+               <span className="font-black text-2xl md:text-3xl uppercase tracking-tight leading-none group-hover:text-gray-300 transition-colors">
                  Penn Rock
                </span>
-               <span className="text-[10px] text-gray-400 uppercase tracking-widest">
+               {/* Changed text-[10px] -> text-xs/sm (Readable) */}
+               <span className="text-xs md:text-sm text-gray-400 uppercase tracking-[0.3em] font-medium mt-1">
                  Industries
                </span>
              </div>
           </Link>
 
           {/* 2. NAVIGATION LINKS */}
-          <div className="flex gap-6 md:gap-8 text-sm font-bold uppercase tracking-wide">
+          <div className="flex gap-6 md:gap-10 text-sm md:text-base font-bold uppercase tracking-wide">
             <Link 
               href="/" 
               className={`hover:text-blue-400 transition-colors ${isActive('/') ? 'text-blue-400' : 'text-gray-300'}`}
