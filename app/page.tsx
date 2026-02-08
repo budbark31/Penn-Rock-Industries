@@ -3,12 +3,13 @@ import { groq } from "next-sanity";
 import InventoryCard from "@/app/components/InventoryCard";
 import FilterBar from "@/app/components/FilterBar";
 
-// Query (Same as before)
+// UPDATED QUERY: 
+// 1. Removed "&& status != 'sold'" (So they show up)
+// 2. Added "order(status asc)" (So 'Available' comes before 'Sold')
 const INVENTORY_QUERY = groq`*[
   _type == "inventory" 
-  && status != "sold"
   && ($category == "all" || category == $category) 
-] | order(_createdAt desc) {
+] | order(status asc, _createdAt desc) {
   _id,
   title,
   "slug": slug.current,
@@ -30,16 +31,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
   const trucks = await client.fetch(INVENTORY_QUERY, { category });
 
   return (
-    // CHANGE 1: Added "pt-16" (Padding Top) to push everything down
     <main className="min-h-screen bg-white pb-20 pt-16 md:pt-20">
       
-      {/* If you deleted the Hero Section, this container is now first */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header Area */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8">
            <h2 className="text-3xl font-bold text-gray-900 mb-4 md:mb-0">Latest Arrivals</h2>
-           {/* Optional: You could add a 'View All' link here later */}
         </div>
         
         {/* Filter Bar */}
@@ -53,8 +51,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
             ))
           ) : (
             <div className="col-span-full text-center py-20 bg-gray-50 rounded-lg border border-gray-100">
-              <p className="text-xl text-gray-600 font-bold">No inventory found in this category.</p>
-              <p className="text-sm text-gray-500 mt-2">Try switching filters or check back later.</p>
+              <p className="text-xl text-gray-600 font-bold">No inventory found.</p>
             </div>
           )}
         </div>
