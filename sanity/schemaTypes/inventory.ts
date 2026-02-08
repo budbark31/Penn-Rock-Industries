@@ -8,7 +8,7 @@ export default defineType({
     defineField({
       name: 'title',
       title: 'Title',
-      type: 'string', // e.g., "2020 Kenworth T880 Dump Truck"
+      type: 'string', 
     }),
     defineField({
       name: 'slug',
@@ -59,7 +59,6 @@ export default defineType({
       name: 'price',
       title: 'Price',
       type: 'number',
-      description: 'Leave blank for "Call for Price"',
     }),
     defineField({
       name: 'year',
@@ -86,6 +85,20 @@ export default defineType({
       title: 'Description',
       type: 'array', 
       of: [{type: 'block'}]
+    }),
+
+    // --- INTERNAL USE ONLY (Hidden from website) ---
+    defineField({
+      name: 'stockDate',
+      title: 'Stock Date (Internal)',
+      type: 'date',
+      description: 'When did this truck arrive? Used for internal aging reports.',
+    }),
+    defineField({
+      name: 'paperwork',
+      title: 'Paperwork / Files',
+      type: 'file',
+      description: 'Upload Titles, Bill of Sale, Repair Orders (PDFs).',
     })
   ],
 })
