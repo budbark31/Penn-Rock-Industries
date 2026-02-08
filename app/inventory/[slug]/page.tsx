@@ -3,8 +3,11 @@ import { groq } from "next-sanity";
 import Link from "next/link";
 import { PortableText } from "next-sanity"; 
 import ImageGallery from "@/app/components/ImageGallery"; 
-import ContactButtons from "@/app/components/ContactButtons"; // Import the new buttons
+import ContactButtons from "@/app/components/ContactButtons";
+import { Metadata } from "next"; // Required for the SEO magic
 
+// 1. THE QUERY
+// We fetch 'images' (array) for the gallery, and all the details for the text
 const TRUCK_QUERY = groq`*[_type == "inventory" && slug.current == $slug][0]{
   title,
   "images": images[].asset->url, 
@@ -22,7 +25,41 @@ const TRUCK_QUERY = groq`*[_type == "inventory" && slug.current == $slug][0]{
 
 export const revalidate = 60;
 
-export default async function TruckPage({ params }: { params: Promise<{ slug: string }> }) {
+type Props = {
+  params: Promise<{ slug: string }>;
+};
+
+// 2. SEO GENERATOR (This creates the "Text Message Preview")
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  
+  // Fetch just the data needed for the preview
+  const truck = await client.fetch(TRUCK_QUERY, { slug });
+
+  if (!truck) {
+    return {
+      title: "Truck Not Found | Penn Rock Industries",
+    };
+  }
+
+  // Choose the first image as the preview, or a fallback if none exist
+  const previewImage = truck.images && truck.images.length > 0 
+    ? truck.images[0] 
+    : "/icon.jpg"; // Fallback to logo if no truck photo
+
+  return {
+    title: `${truck.title} | Penn Rock`,
+    description: `For Sale: ${truck.year} ${truck.make} ${truck.model} - ${truck.hoursOrMileage}. Click for price and photos.`,
+    openGraph: {
+      title: truck.title,
+      description: `${truck.year} ${truck.make} ${truck.model} | Available Now`,
+      images: [previewImage], // This puts the photo in the text message!
+    },
+  };
+}
+
+// 3. THE PAGE CONTENT
+export default async function TruckPage({ params }: Props) {
   const { slug } = await params;
   const truck = await client.fetch(TRUCK_QUERY, { slug });
 
@@ -81,7 +118,7 @@ export default async function TruckPage({ params }: { params: Promise<{ slug: st
           </div>
 
           <div className="mt-auto">
-            {/* Replaced static button with our new Smart Buttons */}
+            {/* Contact Buttons */}
             <ContactButtons truckTitle={truck.title} />
           </div>
         </div>
