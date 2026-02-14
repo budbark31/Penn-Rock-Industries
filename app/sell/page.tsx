@@ -103,10 +103,10 @@ export default function SellPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {/* Fake button for now, points to call */}
             <a 
-              href="tel:7175550199" 
+              href="tel:6105074832" 
               className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-xl text-lg transition-transform hover:-translate-y-1 shadow-lg flex items-center justify-center gap-2"
             >
-              📞 Call Bryan: 717-555-0199
+              📞 Call Bryan: 610-507-4832
             </a>
           </div>
           <p className="text-slate-600 text-sm mt-6">

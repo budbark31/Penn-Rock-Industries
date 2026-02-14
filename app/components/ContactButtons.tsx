@@ -11,8 +11,8 @@ export default function ContactButtons({ truckTitle }: ContactProps) {
   const [showPhone, setShowPhone] = useState(false);
 
   // --- REPLACE WITH YOUR ACTUAL DETAILS ---
-  const PHONE_NUMBER = "717-555-0199"; // Put your real number here
-  const PHONE_CLEAN = "7175550199";    // Numbers only for the link
+  const PHONE_NUMBER = "610-507-4832"; // Put your real number here
+  const PHONE_CLEAN = "6105074832";    // Numbers only for the link
   const EMAIL_ADDRESS = "sales@pennrock.com";
   // ----------------------------------------
 

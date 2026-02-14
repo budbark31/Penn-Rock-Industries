@@ -1,36 +1,50 @@
-import { MetadataRoute } from "next";
-import { client } from "@/sanity/lib/client";
-import { groq } from "next-sanity";
-
-// Base URL of your website
-const BASE_URL = "https://www.pennrockindustries.com"; // CHANGE THIS to your real domain later!
+import { MetadataRoute } from 'next'
+import { client } from '@/sanity/lib/client'
+import { groq } from 'next-sanity'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // 1. Fetch all truck slugs
-  const trucks = await client.fetch(groq`*[_type == "inventory"]{ "slug": slug.current, _updatedAt }`);
+  // 1. Define your base URL (We will change this to pennrockindustries.com when it goes live)
+  const baseUrl = 'https://pennrockindustries.netlify.app'
 
-  // 2. Build the truck URLs
-  const truckEntries: MetadataRoute.Sitemap = trucks.map((truck: any) => ({
-    url: `${BASE_URL}/inventory/${truck.slug}`,
+  // 2. Fetch all trucks from Sanity
+  // We only need the slug and the exact time it was last updated
+  const query = groq`*[_type == "inventory" && defined(slug.current)] {
+    "slug": slug.current,
+    _updatedAt
+  }`
+  
+  const trucks = await client.fetch(query)
+
+  // 3. Generate the dynamic URLs for every single truck in the database
+  const truckUrls: MetadataRoute.Sitemap = trucks.map((truck: any) => ({
+    url: `${baseUrl}/inventory/${truck.slug}`,
     lastModified: new Date(truck._updatedAt),
-    changeFrequency: "daily",
+    changeFrequency: 'weekly',
     priority: 0.8,
-  }));
+  }))
 
-  // 3. Add the static pages (Home, Sell)
-  return [
+  // 4. Define your static, main pages
+  const staticRoutes: MetadataRoute.Sitemap = [
     {
-      url: BASE_URL,
+      url: `${baseUrl}`, // Homepage
       lastModified: new Date(),
-      changeFrequency: "daily",
-      priority: 1,
+      changeFrequency: 'daily',
+      priority: 1.0,
     },
     {
-      url: `${BASE_URL}/sell`,
+      url: `${baseUrl}/sell`, // Sell Page
       lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.5,
+      changeFrequency: 'monthly',
+      priority: 0.9,
     },
-    ...truckEntries,
-  ];
+    {
+      url: `${baseUrl}/about`, // About Page
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    }
+  ]
+
+  // 5. Combine the static pages and dynamic truck pages, then hand them to Google
+  return [...staticRoutes, ...truckUrls]
 }

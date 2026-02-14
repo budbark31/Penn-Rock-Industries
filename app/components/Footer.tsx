@@ -33,8 +33,8 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-3">
                 <span>📞</span>
-                <a href="tel:7175550199" className="hover:text-white transition-colors">
-                  717-555-0199
+                <a href="tel:6105074832" className="hover:text-white transition-colors">
+                  610-507-4832
                 </a>
               </li>
               <li className="flex items-center gap-3">
@@ -68,6 +68,11 @@ export default function Footer() {
               <li>
                 <Link href="/sell" className="hover:text-white transition-colors">
                   Sell Your Truck
+                </Link>
+              </li>
+              <li>
+                <Link href="/about" className="hover:text-white transition-colors">
+                  About Us
                 </Link>
               </li>
             </ul>

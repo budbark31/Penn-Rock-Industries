@@ -48,6 +48,13 @@ export default function Navbar() {
             >
               Sell Your Truck
             </Link>
+
+            <Link 
+              href="/about" 
+              className={`hover:text-blue-400 transition-colors ${isActive('/about') ? 'text-blue-400' : 'text-gray-300'}`}
+            >
+              About
+            </Link>
           </div>
 
         </div>
