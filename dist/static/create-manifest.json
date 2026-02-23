@@ -1,0 +1,20 @@
+{
+  "version": 3,
+  "createdAt": "2026-02-23T19:25:38.380Z",
+  "workspaces": [
+    {
+      "name": "default",
+      "title": "Penn Rock Admin",
+      "basePath": "/studio",
+      "projectId": "72zzspuo",
+      "dataset": "production",
+      "icon": null,
+      "mediaLibrary": {
+        "enabled": false
+      },
+      "schema": "4c73a5b8.create-schema.json",
+      "tools": "d8640c31.create-tools.json"
+    }
+  ],
+  "studioVersion": "4.22.0"
+}
