@@ -1,6 +1,7 @@
 import { client } from "@/sanity/lib/client";
 import { PARTS_QUERY } from "@/sanity/lib/queries";
 import { Metadata } from "next";
+import { Suspense } from "react";
 import FilterBar from "@/app/components/FilterBar";
 import PartsInfiniteGrid from "@/app/components/PartsInfiniteGrid";
 
@@ -42,7 +43,9 @@ export default async function PartsPage() {
         </div>
         
         {/* Filter Bar */}
-        <FilterBar />
+        <Suspense fallback={null}>
+          <FilterBar />
+        </Suspense>
         
         {/* Parts Grid */}
         <PartsInfiniteGrid parts={parts} />
