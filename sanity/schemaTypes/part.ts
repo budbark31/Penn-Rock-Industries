@@ -48,6 +48,19 @@ export default defineType({
       },
     }),
     defineField({
+      name: 'status',
+      title: 'Status',
+      type: 'string',
+      options: {
+        list: [
+          { title: 'Available', value: 'available' },
+          { title: 'Out of Stock', value: 'out-of-stock' },
+          { title: 'Sold', value: 'sold' },
+        ],
+      },
+      initialValue: 'available',
+    }),
+    defineField({
       name: 'price',
       title: 'Price',
       type: 'number',

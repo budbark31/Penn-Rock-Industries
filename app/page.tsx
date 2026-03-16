@@ -1,60 +1,29 @@
 import { client } from "@/sanity/lib/client";
-import { groq } from "next-sanity";
-import InventoryCard from "@/app/components/InventoryCard";
-import FilterBar from "@/app/components/FilterBar";
-
-// UPDATED QUERY: 
-// 1. Removed "&& status != 'sold'" (So they show up)
-// 2. Added "order(status asc)" (So 'Available' comes before 'Sold')
-const INVENTORY_QUERY = groq`*[
-  _type == "inventory" 
-  && ($category == "all" || category == $category) 
-] | order(status asc, _createdAt desc) {
-  _id,
-  title,
-  "slug": slug.current,
-  "images": images[0..4].asset->url,
-  price,
-  year,
-  make,
-  model,
-  hoursOrMileage,
-  status,
-  category
-}`;
+import { ALL_INVENTORY_QUERY } from "@/sanity/lib/queries";
+import UnifiedInventoryGrid from "@/app/components/UnifiedInventoryGrid";
 
 export const revalidate = 60;
 
-export default async function Home({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
-  const resolvedParams = await searchParams;
-  const category = resolvedParams?.category || "all";
-  const trucks = await client.fetch(INVENTORY_QUERY, { category });
+export default async function Home() {
+  const data = await client.fetch(ALL_INVENTORY_QUERY);
 
   return (
-    <main className="min-h-screen bg-white pb-20 pt-16 md:pt-20">
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Header Area */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8">
-           <h2 className="text-3xl font-bold text-gray-900 mb-4 md:mb-0">Latest Arrivals</h2>
+    <main className="min-h-screen bg-white pb-20">
+      {/* Inventory Banner */}
+      <div className="bg-slate-900 pt-24 pb-12 md:pt-28 md:pb-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight">
+            INVENTORY
+          </h1>
+          <p className="mt-3 text-lg text-gray-300 max-w-2xl mx-auto">
+            Browse our selection of heavy-duty trucks, equipment, and quality parts
+          </p>
         </div>
-        
-        {/* Filter Bar */}
-        <FilterBar />
-        
-        {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {trucks.length > 0 ? (
-            trucks.map((truck: any) => (
-              <InventoryCard key={truck._id} truck={truck} />
-            ))
-          ) : (
-            <div className="col-span-full text-center py-20 bg-gray-50 rounded-lg border border-gray-100">
-              <p className="text-xl text-gray-600 font-bold">No inventory found.</p>
-            </div>
-          )}
-        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8">
+        {/* Unified Grid with Filters */}
+        <UnifiedInventoryGrid trucks={data.trucks} parts={data.parts} />
       </div>
     </main>
   );

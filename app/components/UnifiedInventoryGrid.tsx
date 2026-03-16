@@ -1,0 +1,491 @@
+"use client";
+
+import Link from "next/link";
+import Image from "next/image";
+import { useState, useMemo } from "react";
+
+// Types
+interface Truck {
+  _id: string;
+  _type: "inventory";
+  title: string;
+  slug: string;
+  images: string[];
+  price: number;
+  year: number;
+  make: string;
+  model: string;
+  hoursOrMileage: string;
+  status: string;
+  category: string;
+}
+
+interface Part {
+  _id: string;
+  _type: "part";
+  title: string;
+  slug: string;
+  category: string;
+  condition: string;
+  status: string;
+  price: number;
+  inventoryCount: number;
+  imageUrl: string | null;
+}
+
+interface UnifiedGridProps {
+  trucks: Truck[];
+  parts: Part[];
+}
+
+// Constants
+const TRUCK_MAKES = ["All", "Kenworth", "Peterbilt", "Mack", "Ford", "Freightliner", "International", "Other"];
+const TRUCK_CATEGORIES = ["All", "Dump Trucks", "Day Cabs", "Heavy Equipment", "Trailers"];
+const PART_CATEGORIES = ["All", "Engine", "Transmission", "Body/Cab", "Maintenance/Filters", "Accessories", "Other"];
+const PART_CONDITIONS = ["All", "New", "Used", "Rebuilt", "Core"];
+
+// Category value mappers
+const truckCategoryMap: Record<string, string> = {
+  "Dump Trucks": "dump-trucks",
+  "Day Cabs": "day-cabs",
+  "Heavy Equipment": "heavy-equipment",
+  "Trailers": "trailers",
+};
+
+const partCategoryMap: Record<string, string> = {
+  "Engine": "engine",
+  "Transmission": "transmission",
+  "Body/Cab": "body-cab",
+  "Maintenance/Filters": "maintenance-filters",
+  "Accessories": "accessories",
+  "Other": "other",
+};
+
+const partConditionMap: Record<string, string> = {
+  "New": "new",
+  "Used": "used",
+  "Rebuilt": "rebuilt",
+  "Core": "core",
+};
+
+// Format helpers
+function formatCategory(category: string): string {
+  const map: Record<string, string> = {
+    "engine": "Engine",
+    "transmission": "Transmission",
+    "body-cab": "Body/Cab",
+    "maintenance-filters": "Maintenance/Filters",
+    "accessories": "Accessories",
+    "other": "Other",
+    "dump-trucks": "Dump Trucks",
+    "day-cabs": "Day Cabs",
+    "heavy-equipment": "Heavy Equipment",
+    "trailers": "Trailers",
+  };
+  return map[category] || category;
+}
+
+function formatCondition(condition: string): string {
+  const map: Record<string, string> = {
+    "new": "New",
+    "used": "Used",
+    "rebuilt": "Rebuilt",
+    "core": "Core",
+  };
+  return map[condition] || condition;
+}
+
+export default function UnifiedInventoryGrid({ trucks, parts }: UnifiedGridProps) {
+  // State
+  const [activeTab, setActiveTab] = useState<"trucks" | "parts">("trucks");
+  const [truckMake, setTruckMake] = useState("All");
+  const [truckCategory, setTruckCategory] = useState("All");
+  const [partCategory, setPartCategory] = useState("All");
+  const [partCondition, setPartCondition] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Quick Stats (count items not sold/out-of-stock - handles missing status field)
+  const availableTrucks = trucks.filter((t) => t.status !== "sold").length;
+  const availableParts = parts.filter((p) => p.status !== "sold" && p.status !== "out-of-stock").length;
+
+  // Filtered data
+  const filteredTrucks = useMemo(() => {
+    return trucks.filter((truck) => {
+      const makeMatch = truckMake === "All" || truck.make === truckMake || (truckMake === "Other" && !TRUCK_MAKES.slice(1, -1).includes(truck.make));
+      const categoryMatch = truckCategory === "All" || truck.category === truckCategoryMap[truckCategory];
+      const searchMatch = !searchQuery || truck.title.toLowerCase().includes(searchQuery.toLowerCase());
+      return makeMatch && categoryMatch && searchMatch;
+    });
+  }, [trucks, truckMake, truckCategory, searchQuery]);
+
+  const filteredParts = useMemo(() => {
+    return parts.filter((part) => {
+      const categoryMatch = partCategory === "All" || part.category === partCategoryMap[partCategory];
+      const conditionMatch = partCondition === "All" || part.condition === partConditionMap[partCondition];
+      const searchMatch = !searchQuery || part.title.toLowerCase().includes(searchQuery.toLowerCase());
+      return categoryMatch && conditionMatch && searchMatch;
+    });
+  }, [parts, partCategory, partCondition, searchQuery]);
+
+  const displayedItems = activeTab === "trucks" ? filteredTrucks : filteredParts;
+
+  return (
+    <div>
+      {/* Header Section with Toggle, Stats & Search */}
+      <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-8">
+        {/* Quick Stats */}
+        <div className="flex justify-center gap-8 mb-4">
+          <div className="text-center">
+            <span className="text-2xl font-bold text-slate-900">{availableTrucks}</span>
+            <span className="text-gray-500 ml-2">Trucks Available</span>
+          </div>
+          <div className="w-px bg-gray-300"></div>
+          <div className="text-center">
+            <span className="text-2xl font-bold text-orange-500">{availableParts}</span>
+            <span className="text-gray-500 ml-2">Parts in Stock</span>
+          </div>
+        </div>
+
+        {/* Master Toggle */}
+        <div className="flex justify-center mb-4">
+          <div className="inline-flex bg-white rounded-xl p-1.5 shadow-sm border border-gray-200">
+            <button
+              onClick={() => setActiveTab("trucks")}
+              className={`px-8 py-4 rounded-lg font-bold text-base transition-all ${
+                activeTab === "trucks"
+                  ? "bg-slate-900 text-white shadow-md"
+                  : "text-gray-600 hover:text-slate-900 hover:bg-gray-50"
+              }`}
+            >
+              Trucks & Heavy Equipment
+            </button>
+            <button
+              onClick={() => setActiveTab("parts")}
+              className={`px-8 py-4 rounded-lg font-bold text-base transition-all ${
+                activeTab === "parts"
+                  ? "bg-slate-900 text-white shadow-md"
+                  : "text-gray-600 hover:text-slate-900 hover:bg-gray-50"
+              }`}
+            >
+              Parts & Accessories
+            </button>
+          </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="flex justify-center mb-4">
+          <div className="relative w-full max-w-md">
+            <input
+              type="text"
+              placeholder={activeTab === "trucks" ? "Search trucks..." : "Search parts..."}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-4 py-3 pl-10 rounded-lg border-2 border-gray-200 bg-white text-gray-700 font-medium focus:border-slate-900 focus:outline-none"
+            />
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-wrap gap-4 justify-center">
+        {activeTab === "trucks" ? (
+          <>
+            {/* Make Filter */}
+            <select
+              value={truckMake}
+              onChange={(e) => setTruckMake(e.target.value)}
+              className="px-4 py-2 rounded-lg border-2 border-gray-200 bg-white text-gray-700 font-medium focus:border-slate-900 focus:outline-none"
+            >
+              {TRUCK_MAKES.map((make) => (
+                <option key={make} value={make}>
+                  {make === "All" ? "All Makes" : make}
+                </option>
+              ))}
+            </select>
+
+            {/* Category Filter */}
+            <select
+              value={truckCategory}
+              onChange={(e) => setTruckCategory(e.target.value)}
+              className="px-4 py-2 rounded-lg border-2 border-gray-200 bg-white text-gray-700 font-medium focus:border-slate-900 focus:outline-none"
+            >
+              {TRUCK_CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat === "All" ? "All Categories" : cat}
+                </option>
+              ))}
+            </select>
+          </>
+        ) : (
+          <>
+            {/* Part Category Filter */}
+            <select
+              value={partCategory}
+              onChange={(e) => setPartCategory(e.target.value)}
+              className="px-4 py-2 rounded-lg border-2 border-gray-200 bg-white text-gray-700 font-medium focus:border-slate-900 focus:outline-none"
+            >
+              {PART_CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat === "All" ? "All Categories" : cat}
+                </option>
+              ))}
+            </select>
+
+            {/* Condition Filter */}
+            <select
+              value={partCondition}
+              onChange={(e) => setPartCondition(e.target.value)}
+              className="px-4 py-2 rounded-lg border-2 border-gray-200 bg-white text-gray-700 font-medium focus:border-slate-900 focus:outline-none"
+            >
+              {PART_CONDITIONS.map((cond) => (
+                <option key={cond} value={cond}>
+                  {cond === "All" ? "All Conditions" : cond}
+                </option>
+              ))}
+            </select>
+          </>
+        )}
+
+          {/* Clear Filters */}
+          <button
+            onClick={() => {
+              setTruckMake("All");
+              setTruckCategory("All");
+              setPartCategory("All");
+              setPartCondition("All");
+              setSearchQuery("");
+            }}
+            className="px-4 py-2 rounded-lg border-2 border-orange-500 text-orange-500 font-medium hover:bg-orange-500 hover:text-white transition-colors"
+          >
+            Clear Filters
+          </button>
+        </div>
+      </div>
+
+      {/* Results Count */}
+      <p className="text-center text-gray-500 mb-6">
+        Showing {displayedItems.length} {activeTab === "trucks" ? "vehicles" : "parts"}
+      </p>
+
+      {/* Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {displayedItems.length > 0 ? (
+          displayedItems.map((item) =>
+            activeTab === "trucks" ? (
+              <TruckCard key={item._id} truck={item as Truck} />
+            ) : (
+              <PartCard key={item._id} part={item as Part} />
+            )
+          )
+        ) : (
+          <div className="col-span-full text-center py-20 bg-gray-50 rounded-lg border border-gray-200">
+            <p className="text-xl text-gray-600 font-bold">No items found.</p>
+            <p className="text-gray-500 mt-2">Try adjusting your filters.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Truck Card Component
+function TruckCard({ truck }: { truck: Truck }) {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+  const images = truck.images || [];
+  const currentImage = images[currentImageIndex];
+  const isSold = truck.status === "sold";
+
+  const nextImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  };
+  const prevImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  return (
+    <div
+      className={`group border rounded-lg overflow-hidden transition-all bg-white flex flex-col ${
+        isSold ? "border-gray-200 opacity-80" : "border-gray-200 hover:shadow-lg hover:-translate-y-1"
+      }`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="relative h-64 w-full bg-gray-100">
+        <Link href={`/inventory/${truck.slug}`} className="absolute inset-0 z-0">
+          {currentImage ? (
+            <Image
+              src={currentImage}
+              alt={truck.title}
+              fill
+              className={`object-cover transition-all duration-500 ${isSold ? "grayscale contrast-125" : ""}`}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-400">No Image</div>
+          )}
+        </Link>
+
+        {isSold && (
+          <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none bg-black/10">
+            <div className="border-4 border-red-600 text-red-600 font-black text-4xl px-6 py-2 -rotate-12 bg-white/90 shadow-xl tracking-widest uppercase">
+              SOLD
+            </div>
+          </div>
+        )}
+
+        {!isSold && images.length > 1 && isHovered && (
+          <>
+            <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full z-10 hover:bg-black/70">
+              &#8249;
+            </button>
+            <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full z-10 hover:bg-black/70">
+              &#8250;
+            </button>
+            <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-10">
+              {images.map((_, idx) => (
+                <div key={idx} className={`h-1.5 w-1.5 rounded-full shadow-sm ${idx === currentImageIndex ? "bg-white" : "bg-white/50"}`} />
+              ))}
+            </div>
+          </>
+        )}
+
+        {!isSold && (
+          <div className={`absolute top-2 right-2 text-xs font-bold px-2 py-1 rounded uppercase shadow-sm z-10 ${
+            truck.status === "pending" ? "bg-orange-500 text-white" : "bg-green-600 text-white"
+          }`}>
+            {truck.status === "pending" ? "Pending Sale" : "Available"}
+          </div>
+        )}
+      </div>
+
+      <Link href={`/inventory/${truck.slug}`} className="flex flex-col flex-grow">
+        <div className="p-4 flex flex-col flex-grow">
+          <div className="mb-2">
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              {formatCategory(truck.category)}
+            </span>
+          </div>
+
+          <h3 className={`text-lg font-bold line-clamp-1 mb-1 ${isSold ? "text-gray-500 line-through decoration-gray-400" : "text-gray-900"}`}>
+            {truck.title}
+          </h3>
+
+          <p className="text-gray-500 text-sm mb-4">
+            {truck.year} • {truck.make} • {truck.hoursOrMileage}
+          </p>
+
+          <div className="mt-auto flex items-center justify-between border-t pt-4">
+            <span className={`text-2xl font-bold ${isSold ? "text-gray-400" : "text-blue-900"}`}>
+              {truck.price ? `$${truck.price.toLocaleString()}` : "Call for Price"}
+            </span>
+
+            {!isSold && (
+              <span className="text-sm font-medium text-gray-600 group-hover:text-blue-900">
+                View Details &rarr;
+              </span>
+            )}
+
+            {isSold && (
+              <span className="text-sm font-bold text-red-600 uppercase tracking-wider">
+                Sold
+              </span>
+            )}
+          </div>
+        </div>
+      </Link>
+    </div>
+  );
+}
+
+// Part Card Component
+function PartCard({ part }: { part: Part }) {
+  const isSold = part.status === "sold";
+  const isOutOfStock = part.status === "out-of-stock";
+
+  return (
+    <Link
+      href={`/parts/${part.slug}`}
+      className={`group border rounded-lg overflow-hidden transition-all bg-white flex flex-col ${
+        isSold ? "border-gray-200 opacity-80" : "border-gray-200 hover:shadow-lg hover:-translate-y-1"
+      }`}
+    >
+      <div className="relative h-64 w-full bg-gray-100">
+        {part.imageUrl ? (
+          <Image
+            src={part.imageUrl}
+            alt={part.title}
+            fill
+            className={`object-cover transition-all duration-500 ${isSold ? "grayscale contrast-125" : ""}`}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-400">
+            <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+        )}
+
+        {isSold && (
+          <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none bg-black/10">
+            <div className="border-4 border-red-600 text-red-600 font-black text-4xl px-6 py-2 -rotate-12 bg-white/90 shadow-xl tracking-widest uppercase">
+              SOLD
+            </div>
+          </div>
+        )}
+
+        {!isSold && (
+          <div className={`absolute top-2 right-2 text-xs font-bold px-2 py-1 rounded uppercase shadow-sm z-10 ${
+            isOutOfStock ? "bg-orange-500 text-white" : "bg-green-600 text-white"
+          }`}>
+            {isOutOfStock ? "Out of Stock" : "Available"}
+          </div>
+        )}
+      </div>
+
+      <div className="p-4 flex flex-col flex-grow">
+        <div className="mb-2">
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            {formatCategory(part.category)}
+          </span>
+        </div>
+
+        <h3 className={`text-lg font-bold line-clamp-1 mb-1 ${isSold ? "text-gray-500 line-through decoration-gray-400" : "text-gray-900"}`}>
+          {part.title}
+        </h3>
+
+        <p className="text-gray-500 text-sm mb-4">
+          {formatCondition(part.condition)}
+          {part.inventoryCount !== null && part.inventoryCount !== undefined && (
+            <> • {part.inventoryCount > 0 ? `${part.inventoryCount} in stock` : "Out of stock"}</>
+          )}
+        </p>
+
+        <div className="mt-auto flex items-center justify-between border-t pt-4">
+          <span className={`text-2xl font-bold ${isSold ? "text-gray-400" : "text-blue-900"}`}>
+            {part.price ? `$${part.price.toLocaleString()}` : "Call for Price"}
+          </span>
+
+          {!isSold && (
+            <span className="text-sm font-medium text-gray-600 group-hover:text-blue-900">
+              View Details &rarr;
+            </span>
+          )}
+
+          {isSold && (
+            <span className="text-sm font-bold text-red-600 uppercase tracking-wider">
+              Sold
+            </span>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+}
